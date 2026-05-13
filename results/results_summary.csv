@@ -1,0 +1,4 @@
+agent,mean_reward,std_reward,min_reward,max_reward,n_episodes
+random,173.88,115.36,-63.91,405.0,100
+q_learning,311.94,111.02,-328.59,548.9,100
+ppo,817.91,127.51,530.86,1043.92,100

@@ -1,0 +1,44 @@
+{
+  "temperature_c": {
+    "sim_min": 5,
+    "sim_max": 45,
+    "optimal_min": 18,
+    "optimal_max": 26,
+    "source": "greenhouse_sensor_10min + plant_growth_conditions"
+  },
+  "humidity_pct": {
+    "sim_min": 20,
+    "sim_max": 85,
+    "optimal_min": 50,
+    "optimal_max": 70,
+    "source": "greenhouse_sensor_10min + plant_growth_conditions"
+  },
+  "light_lux": {
+    "sim_min": 0,
+    "sim_max": 35000,
+    "optimal_min": 3000,
+    "optimal_max": 10000,
+    "source": "greenhouse_sensor_10min"
+  },
+  "co2_ppm": {
+    "sim_min": 400,
+    "sim_max": 2000,
+    "optimal_min": 800,
+    "optimal_max": 1500,
+    "source": "greenhouse_sensor_10min + horticultural literature"
+  },
+  "soil_moisture_pct": {
+    "sim_min": 10,
+    "sim_max": 90,
+    "optimal_min": 40,
+    "optimal_max": 70,
+    "source": "plant_growth_conditions + horticultural literature"
+  },
+  "voc_ppb": {
+    "sim_min": 0,
+    "sim_max": 2000,
+    "optimal_min": 0,
+    "optimal_max": 500,
+    "source": "greenhouse_sensor_10min"
+  }
+}

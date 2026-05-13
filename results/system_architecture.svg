@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="900" height="520" viewBox="0 0 900 520"
+     xmlns="http://www.w3.org/2000/svg"
+     font-family="Arial, Helvetica, sans-serif">
+
+  <!-- Background -->
+  <rect width="900" height="520" fill="#0d1f16" rx="12"/>
+
+  <!-- Title -->
+  <text x="450" y="38" text-anchor="middle"
+        font-size="16" font-weight="bold" fill="#b7e4c7">
+    Greenhouse AI Controller — ESP32 Deployment Architecture
+  </text>
+  <text x="450" y="58" text-anchor="middle"
+        font-size="11" fill="#52b788">
+    Trained PPO policy (9,799 parameters · 9.6 KB quantised) running on embedded hardware
+  </text>
+
+  <!-- ── SENSOR COLUMN ── -->
+  <rect x="30" y="76" width="170" height="360" rx="12"
+        fill="#042C53" stroke="#185FA5" stroke-width="1"/>
+  <text x="115" y="102" text-anchor="middle"
+        font-size="13" font-weight="bold" fill="#B5D4F4">Sensors</text>
+  <line x1="50" y1="112" x2="180" y2="112" stroke="#185FA5" stroke-width="0.5" opacity="0.5"/>
+
+  <!-- DHT22 -->
+  <rect x="46" y="122" width="138" height="48" rx="6"
+        fill="#0C447C" stroke="#378ADD" stroke-width="0.5"/>
+  <text x="115" y="142" text-anchor="middle"
+        font-size="12" font-weight="bold" fill="#B5D4F4">DHT22</text>
+  <text x="115" y="160" text-anchor="middle"
+        font-size="10" fill="#85B7EB">temperature · humidity</text>
+
+  <!-- Soil sensor -->
+  <rect x="46" y="178" width="138" height="48" rx="6"
+        fill="#0C447C" stroke="#378ADD" stroke-width="0.5"/>
+  <text x="115" y="198" text-anchor="middle"
+        font-size="12" font-weight="bold" fill="#B5D4F4">Soil sensor</text>
+  <text x="115" y="216" text-anchor="middle"
+        font-size="10" fill="#85B7EB">moisture %</text>
+
+  <!-- LDR -->
+  <rect x="46" y="234" width="138" height="48" rx="6"
+        fill="#0C447C" stroke="#378ADD" stroke-width="0.5"/>
+  <text x="115" y="254" text-anchor="middle"
+        font-size="12" font-weight="bold" fill="#B5D4F4">LDR</text>
+  <text x="115" y="272" text-anchor="middle"
+        font-size="10" fill="#85B7EB">light (lux)</text>
+
+  <!-- MQ135 -->
+  <rect x="46" y="290" width="138" height="48" rx="6"
+        fill="#0C447C" stroke="#378ADD" stroke-width="0.5"/>
+  <text x="115" y="310" text-anchor="middle"
+        font-size="12" font-weight="bold" fill="#B5D4F4">MQ135</text>
+  <text x="115" y="328" text-anchor="middle"
+        font-size="10" fill="#85B7EB">CO₂, VOC</text>
+
+  <!-- RTC -->
+  <rect x="46" y="346" width="138" height="48" rx="6"
+        fill="#0C447C" stroke="#378ADD" stroke-width="0.5"/>
+  <text x="115" y="366" text-anchor="middle"
+        font-size="12" font-weight="bold" fill="#B5D4F4">RTC clock</text>
+  <text x="115" y="384" text-anchor="middle"
+        font-size="10" fill="#85B7EB">time of day</text>
+
+  <!-- Arrow: sensors → ESP32 -->
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#52b788"
+            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <line x1="200" y1="256" x2="238" y2="256"
+        stroke="#52b788" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="219" y="249" text-anchor="middle"
+        font-size="9" fill="#52b788">7 values</text>
+
+  <!-- ── ESP32 COLUMN ── -->
+  <rect x="242" y="76" width="340" height="360" rx="12"
+        fill="#26215C" stroke="#534AB7" stroke-width="1"/>
+  <text x="412" y="102" text-anchor="middle"
+        font-size="13" font-weight="bold" fill="#CECBF6">ESP32 Microcontroller</text>
+  <line x1="262" y1="112" x2="562" y2="112"
+        stroke="#534AB7" stroke-width="0.5" opacity="0.5"/>
+
+  <!-- Step 1: Normalise -->
+  <rect x="258" y="122" width="308" height="68" rx="8"
+        fill="#2C2C2A" stroke="#5F5E5A" stroke-width="0.5"/>
+  <text x="412" y="147" text-anchor="middle"
+        font-size="12" font-weight="bold" fill="#D3D1C7">1. Normalise sensor readings</text>
+  <text x="412" y="166" text-anchor="middle"
+        font-size="10" fill="#B4B2A9">raw ADC values → [0, 1] float</text>
+  <text x="412" y="182" text-anchor="middle"
+        font-size="10" fill="#888780">using ranges from parameter_ranges.json</text>
+
+  <!-- Down arrow -->
+  <line x1="412" y1="190" x2="412" y2="206"
+        stroke="#AFA9EC" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <!-- Step 2: Neural network -->
+  <rect x="258" y="208" width="308" height="90" rx="8"
+        fill="#412402" stroke="#854F0B" stroke-width="0.5"/>
+  <text x="412" y="233" text-anchor="middle"
+        font-size="12" font-weight="bold" fill="#FAC775">2. Neural network inference</text>
+  <text x="412" y="253" text-anchor="middle"
+        font-size="10" fill="#EF9F27">7 inputs → 64 → 64 → 6 outputs  (tanh)</text>
+  <text x="412" y="272" text-anchor="middle"
+        font-size="10" fill="#BA7517">9,799 weights · Model: 9.6 KB (int8)</text>
+  <text x="412" y="289" text-anchor="middle"
+        font-size="10" fill="#BA7517">Inference time: ~1 ms at 240 MHz</text>
+
+  <!-- Down arrow -->
+  <line x1="412" y1="298" x2="412" y2="314"
+        stroke="#AFA9EC" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <!-- Step 3: Select action -->
+  <rect x="258" y="316" width="308" height="68" rx="8"
+        fill="#2C2C2A" stroke="#5F5E5A" stroke-width="0.5"/>
+  <text x="412" y="341" text-anchor="middle"
+        font-size="12" font-weight="bold" fill="#D3D1C7">3. Select best action (0–5)</text>
+  <text x="412" y="360" text-anchor="middle"
+        font-size="10" fill="#B4B2A9">argmax of 6 output logits</text>
+  <text x="412" y="376" text-anchor="middle"
+        font-size="10" fill="#888780">fire relay GPIO → actuator</text>
+
+  <!-- Arrow: ESP32 → actuators -->
+  <line x1="582" y1="256" x2="620" y2="256"
+        stroke="#52b788" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="601" y="249" text-anchor="middle"
+        font-size="9" fill="#52b788">action</text>
+
+  <!-- ── ACTUATOR COLUMN ── -->
+  <rect x="624" y="76" width="242" height="360" rx="12"
+        fill="#04342C" stroke="#0F6E56" stroke-width="1"/>
+  <text x="745" y="102" text-anchor="middle"
+        font-size="13" font-weight="bold" fill="#9FE1CB">Relay Board + Actuators</text>
+  <line x1="644" y1="112" x2="846" y2="112"
+        stroke="#0F6E56" stroke-width="0.5" opacity="0.5"/>
+
+  <!-- Actuator items -->
+  <!-- Vent fan -->
+  <rect x="640" y="122" width="210" height="44" rx="6"
+        fill="#085041" stroke="#5DCAA5" stroke-width="0.5"/>
+  <text x="745" y="140" text-anchor="middle"
+        font-size="12" font-weight="bold" fill="#9FE1CB">Ventilation fan</text>
+  <text x="745" y="158" text-anchor="middle"
+        font-size="10" fill="#5DCAA5">open vents · cool air · remove VOC</text>
+
+  <!-- Water pump -->
+  <rect x="640" y="174" width="210" height="44" rx="6"
+        fill="#085041" stroke="#5DCAA5" stroke-width="0.5"/>
+  <text x="745" y="192" text-anchor="middle"
+        font-size="12" font-weight="bold" fill="#9FE1CB">Water pump</text>
+  <text x="745" y="210" text-anchor="middle"
+        font-size="10" fill="#5DCAA5">irrigate soil · raise humidity</text>
+
+  <!-- Grow lights -->
+  <rect x="640" y="226" width="210" height="44" rx="6"
+        fill="#085041" stroke="#5DCAA5" stroke-width="0.5"/>
+  <text x="745" y="244" text-anchor="middle"
+        font-size="12" font-weight="bold" fill="#9FE1CB">Grow lights (LED)</text>
+  <text x="745" y="262" text-anchor="middle"
+        font-size="10" fill="#5DCAA5">raise lux · slight heat</text>
+
+  <!-- Heater -->
+  <rect x="640" y="278" width="210" height="44" rx="6"
+        fill="#085041" stroke="#5DCAA5" stroke-width="0.5"/>
+  <text x="745" y="296" text-anchor="middle"
+        font-size="12" font-weight="bold" fill="#9FE1CB">Heater</text>
+  <text x="745" y="314" text-anchor="middle"
+        font-size="10" fill="#5DCAA5">raise temperature +2°C/step</text>
+
+  <!-- CO2 valve -->
+  <rect x="640" y="330" width="210" height="44" rx="6"
+        fill="#085041" stroke="#5DCAA5" stroke-width="0.5"/>
+  <text x="745" y="348" text-anchor="middle"
+        font-size="12" font-weight="bold" fill="#9FE1CB">CO₂ valve</text>
+  <text x="745" y="366" text-anchor="middle"
+        font-size="10" fill="#5DCAA5">inject gas +150 ppm/step</text>
+
+  <!-- Bottom caption -->
+  <text x="450" y="460" text-anchor="middle"
+        font-size="11" fill="#52b788">
+    Control cycle: read sensors → normalise → neural network → argmax → relay → wait 10 min → repeat (144 cycles/day)
+  </text>
+
+  <!-- Phase label -->
+  <rect x="30" y="476" width="840" height="28" rx="6"
+        fill="#132318" stroke="#2d6a4f" stroke-width="0.5"/>
+  <text x="450" y="494" text-anchor="middle"
+        font-size="10" fill="#52b788">
+    Greenhouse RL Controller · Phase 6: Edge AI Deployment · Parameter ranges from greenhouse_sensor_10min.csv (17,562 real sensor readings)
+  </text>
+</svg>
