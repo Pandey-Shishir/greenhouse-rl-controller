@@ -168,14 +168,16 @@ reduces temperature by 1.5°C and humidity by 3% per step.
 ### Part 1: Python Q-Learning agent (q_agent.py)
 
 **Q-table design**
-State: binary encoding of whether each of 6 variables is in optimal range.
-2^6 = 64 possible states. Action space: 6. Q-table: 64 × 6 = 384 values.
+State: ternary encoding — too low (0), optimal (1), too high (2) — per variable.
+3^6 = 729 possible states. Action space: 6. Q-table: 729 × 6 = 4,374 values.
+Ternary encoding allows the agent to distinguish temperature too HOT (open vents)
+from temperature too COLD (heater on). Binary encoding collapsed both into one state.
 
 **Hyperparameters**
 - Learning rate: 0.1
 - Discount factor: 0.95
 - Epsilon: 1.0 decaying to 0.05 over 79 episodes at 0.012 per episode
-- Total training: 200 episodes
+- Total training: 500 episodes
 
 **Results**
 - First 10 episodes average: 170.5
@@ -183,11 +185,12 @@ State: binary encoding of whether each of 6 variables is in optimal range.
 - Improvement: +70.7 confirmed
 
 **Limitation found (important for project narrative)**
-Tabular Q-learning fails for rarely visited states. Some actions mapped incorrectly
-because those state combinations rarely occurred during training. Example: temperature
-too high mapped to wrong action. This is the academic justification for moving to
-PPO in Phase 5. Neural networks generalise across unseen states; tables cannot.
-This finding is the baseline that makes the Phase 5 comparison meaningful.
+Initial limitation found and fixed: binary state encoding (in/out of range) meant
+the agent could not distinguish too-high from too-low for any variable. Fixed by
+switching to ternary encoding (3^6 = 729 states). After the fix the agent
+correctly learns: temp too hot → vents, temp too cold → heater, dark → lights,
+dry → water, low CO2 → inject. Q-learning still has a performance ceiling vs PPO
+due to discrete state approximation, but decisions are now qualitatively correct.
 
 ### Part 2: Browser simulation (simulation.html)
 
