@@ -99,7 +99,8 @@ The simulation environment is calibrated against real greenhouse sensor data. Ev
 
 ### Why PPO beats Q-Learning
 
-Q-Learning stores a lookup table of 64 states (binary: each variable either in or out of optimal range). It cannot generalise to situations it has not seen during training. PPO uses a neural network (7 → 64 → 64 → 6, tanh activation) that takes continuous sensor values directly and generalises across the full state space. The improvement from 312 to 818 mean reward demonstrates this concretely.
+Q-Learning stores a lookup table of 729 states (ternary: each variable is too low, optimal, or too high — giving 3⁶ = 729 combinations). It cannot generalise to
+situations it has not seen during training. PPO uses a neural network (7 → 64 → 64 → 6, tanh activation) that takes continuous sensor values directly and generalises across the full state space. The improvement from 312 to 818 mean reward demonstrates this concretely.
 
 ### Edge AI deployment
 
