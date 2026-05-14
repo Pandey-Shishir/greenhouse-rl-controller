@@ -3,930 +3,364 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Greenhouse AI Controller — Reinforcement Learning Simulation</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&display=swap" rel="stylesheet">
+<title>Greenhouse AI Controller</title>
 <style>
-  :root {
-    --green-dark:  #1a3a2a;
-    --green-mid:   #2d6a4f;
-    --green-light: #52b788;
-    --green-pale:  #b7e4c7;
-    --green-ghost: #d8f3dc;
-    --amber:       #e9c46a;
-    --coral:       #e76f51;
-    --sky:         #a8dadc;
-    --night:       #1a1a2e;
-    --soil:        #6b4226;
-    --mono:        'IBM Plex Mono', monospace;
-    --serif:       'Fraunces', serif;
-    --bg:          #0d1f16;
-    --surface:     #132318;
-    --border:      rgba(82,183,136,0.2);
-    --text:        #e8f5e9;
-    --text-dim:    rgba(232,245,233,0.5);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 13px;
-    min-height: 100vh;
-    padding: 20px;
-  }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a1a0f;color:#e8f5e9;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;padding:18px;}
 
-  /* Header */
-  .header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 18px;
-    padding-bottom: 12px;
-    border-bottom: 0.5px solid var(--border);
-  }
-  .header h1 {
-    font-family: var(--serif);
-    font-weight: 300;
-    font-size: 22px;
-    color: var(--green-pale);
-    letter-spacing: -0.02em;
-  }
-  .header h1 span { font-style: italic; color: var(--green-light); }
-  .header-sub {
-    font-size: 11px;
-    color: var(--text-dim);
-    font-family: var(--mono);
-  }
+#loading{position:fixed;inset:0;background:#0a1a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:999;}
+.load-bar-wrap{width:280px;height:6px;background:#1a3a2a;border-radius:3px;overflow:hidden;}
+.load-bar-fill{height:100%;background:#52b788;border-radius:3px;transition:width .1s;}
 
-  /* Stats bar */
-  .stats-bar {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr) auto;
-    gap: 8px;
-    margin-bottom: 14px;
-    align-items: center;
-  }
-  .stat {
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 12px;
-  }
-  .stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 3px; }
-  .stat-value { font-size: 20px; font-weight: 500; color: var(--green-light); }
-  .stat-value.negative { color: var(--coral); }
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #1a3a2a;}
+.header h1{font-size:19px;font-weight:700;color:#b7e4c7;}
+.header p{font-size:11px;color:#52b788;margin-top:3px;}
+.header-stats{display:flex;gap:20px;text-align:right;}
+.hstat-label{font-size:10px;color:#52b788;text-transform:uppercase;letter-spacing:.06em;}
+.hstat-val{font-size:20px;font-weight:700;font-family:monospace;color:#b7e4c7;line-height:1.2;}
 
-  /* Mode pill */
-  .mode-pill {
-    font-size: 10px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    border: 0.5px solid;
-    white-space: nowrap;
-    font-family: var(--mono);
-  }
+.main{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
 
-  /* Controls */
-  .controls {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-  .btn {
-    padding: 7px 16px;
-    border-radius: 6px;
-    border: 0.5px solid var(--green-light);
-    background: transparent;
-    color: var(--green-light);
-    cursor: pointer;
-    font-family: var(--mono);
-    font-size: 12px;
-    transition: all .15s;
-  }
-  .btn:hover { background: rgba(82,183,136,0.12); }
-  .btn.active { background: var(--green-mid); color: var(--green-ghost); border-color: var(--green-mid); }
-  .btn.reset { border-color: var(--border); color: var(--text-dim); }
-  .btn.reset:hover { border-color: var(--green-light); color: var(--green-light); }
-  .spd {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: var(--text-dim);
-  }
-  input[type=range] {
-    -webkit-appearance: none;
-    width: 70px;
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    outline: none;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: var(--green-light);
-    cursor: pointer;
-  }
+.sensor-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.scard{background:#0f2318;border:1.5px solid #2d6a4f;border-radius:12px;padding:13px 14px;transition:border-color .4s,background .4s;}
+.scard.ok{border-color:#52b788;background:#0d2218;}
+.scard.hot{border-color:#e76f51;background:#250d08;animation:pr 1.2s ease-in-out infinite;}
+.scard.low{border-color:#e9c46a;background:#201808;animation:pa 1.2s ease-in-out infinite;}
+@keyframes pr{0%,100%{box-shadow:0 0 0 0 rgba(231,111,81,0);}50%{box-shadow:0 0 0 5px rgba(231,111,81,0.12);}}
+@keyframes pa{0%,100%{box-shadow:0 0 0 0 rgba(233,196,106,0);}50%{box-shadow:0 0 0 5px rgba(233,196,106,0.12);}}
+.scard-icon{font-size:11px;color:#52b788;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+.scard-val{font-size:22px;font-weight:700;font-family:monospace;margin-bottom:7px;transition:color .4s;}
+.scard-val.ok{color:#52b788;}.scard-val.hot{color:#e76f51;}.scard-val.low{color:#e9c46a;}
+.bar-wrap{position:relative;height:7px;background:#1a3a2a;border-radius:4px;margin-bottom:6px;}
+.bar-opt{position:absolute;height:100%;background:rgba(82,183,136,0.22);border-radius:4px;}
+.bar-fill{position:absolute;left:0;height:100%;border-radius:4px;transition:width .5s,background .4s;}
+.scard-status{font-size:10px;font-weight:600;line-height:1.4;}
+.scard-status.ok{color:#52b788;}.scard-status.hot{color:#e76f51;}.scard-status.low{color:#e9c46a;}
 
-  /* Main grid */
-  .main-grid {
-    display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
+.right-panel{display:flex;flex-direction:column;gap:14px;}
 
-  /* Panel */
-  .panel {
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-  }
-  .panel-label {
-    font-size: 10px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+.decision-card{background:#0f2318;border:2px solid #534AB7;border-radius:14px;padding:18px 20px;flex:1;transition:border-color .3s,background .3s;}
+.dc-label{font-size:10px;color:#52b788;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+.dc-action-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.dc-emoji{font-size:36px;line-height:1;}
+.dc-name{font-size:20px;font-weight:700;transition:color .3s;}
+.dc-why-label{font-size:10px;color:rgba(232,245,233,.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.dc-why{font-size:13px;color:rgba(232,245,233,.75);line-height:1.6;margin-bottom:10px;}
+.dc-effect{font-size:12px;color:#52b788;padding:8px 12px;background:rgba(82,183,136,.1);border-radius:8px;border-left:3px solid #52b788;line-height:1.5;}
 
-  /* SVG greenhouse */
-  #gh-svg { display: block; width: 100%; border-radius: 6px; }
+.room-card{background:#0f2318;border:1.5px solid #2d6a4f;border-radius:14px;padding:16px;position:relative;overflow:hidden;min-height:155px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
+.room-bg-tint{position:absolute;inset:0;border-radius:13px;transition:background 1.2s;pointer-events:none;}
+.room-anim-layer{position:absolute;inset:0;pointer-events:none;}
 
-  /* Action display */
-  .action-display {
-    margin-top: 10px;
-    padding: 9px 12px;
-    border-radius: 6px;
-    border: 0.5px solid;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: background .3s, border-color .3s;
-  }
-  .act-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .act-name { font-size: 13px; font-weight: 500; }
-  .act-desc { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
-  .health-bar-wrap {
-    margin-top: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .health-label { font-size: 10px; color: var(--text-dim); white-space: nowrap; }
-  .health-track {
-    flex: 1;
-    height: 4px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-  .health-fill { height: 100%; border-radius: 2px; transition: width .3s, background .3s; }
-  .health-val { font-size: 10px; font-family: var(--mono); white-space: nowrap; }
+@keyframes wind{0%{transform:translateX(-120%);opacity:.9;}100%{transform:translateX(220%);opacity:0;}}
+@keyframes wdrop{0%{transform:translateY(-5px);opacity:.9;}100%{transform:translateY(75px);opacity:0;}}
+@keyframes lglow{0%,100%{opacity:.35;}50%{opacity:.75;}}
+@keyframes hrise{0%{opacity:.7;}100%{transform:translateY(-50px);opacity:0;}}
+@keyframes cbub{0%{opacity:.8;}100%{transform:translateY(-60px);opacity:0;}}
 
-  /* Sensor gauges */
-  .gauge { margin-bottom: 10px; }
-  .gauge-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
-  .gauge-name { font-size: 11px; color: var(--text-dim); }
-  .gauge-val { font-size: 12px; font-weight: 500; font-family: var(--mono); }
-  .gauge-track {
-    position: relative;
-    height: 6px;
-    background: rgba(255,255,255,0.07);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .gauge-opt-zone { position: absolute; height: 100%; background: rgba(82,183,136,0.2); }
-  .gauge-fill { position: absolute; left: 0; height: 100%; border-radius: 3px; transition: width .2s, background .3s; }
-  .gauge-limits { display: flex; justify-content: space-between; font-size: 9px; color: rgba(232,245,233,0.25); margin-top: 2px; }
+.perf-card{background:#0f2318;border:1px solid #1a3a2a;border-radius:12px;padding:14px 16px;}
+.perf-title{font-size:10px;color:#52b788;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;}
+.perf-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.perf-label{font-size:12px;width:145px;flex-shrink:0;color:rgba(232,245,233,.55);}
+.perf-label.hi{color:#52b788;font-weight:600;}
+.perf-bar-track{flex:1;height:9px;background:#1a3a2a;border-radius:5px;overflow:hidden;}
+.perf-bar-fill{height:100%;border-radius:5px;}
+.perf-val{font-size:12px;width:32px;text-align:right;font-family:monospace;color:#b7e4c7;}
+.perf-val.hi{color:#52b788;font-weight:700;}
+.perf-note{font-size:10px;color:rgba(232,245,233,.3);margin-top:8px;line-height:1.6;}
+.spd-btn{padding:5px 12px;border-radius:6px;border:1px solid #2d6a4f;background:transparent;color:rgba(232,245,233,.6);cursor:pointer;font-size:12px;font-family:"Segoe UI",sans-serif;transition:all .15s;}
+.spd-btn:hover{border-color:#52b788;color:#b7e4c7;}
+.spd-btn.active{background:#1a3a2a;border-color:#52b788;color:#52b788;font-weight:700;}
 
-  /* Chart */
-  .chart-panel {
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-  }
-  #chart-canvas { display: block; width: 100%; }
-  .chart-legend {
-    display: flex;
-    gap: 16px;
-    margin-top: 8px;
-    font-size: 10px;
-    color: var(--text-dim);
-  }
-  .legend-line {
-    display: inline-block;
-    width: 16px;
-    height: 2px;
-    vertical-align: middle;
-    border-radius: 1px;
-    margin-right: 4px;
-  }
-
-  /* Download button */
-  .download-wrap {
-    margin-top: 10px;
-    display: flex;
-    justify-content: flex-end;
-  }
-  .btn-download {
-    padding: 5px 12px;
-    border-radius: 6px;
-    border: 0.5px solid var(--border);
-    background: transparent;
-    color: var(--text-dim);
-    cursor: pointer;
-    font-family: var(--mono);
-    font-size: 11px;
-    transition: all .15s;
-  }
-  .btn-download:hover { border-color: var(--green-light); color: var(--green-light); }
-
-  /* Footer */
-  .footer {
-    margin-top: 14px;
-    padding-top: 10px;
-    border-top: 0.5px solid var(--border);
-    font-size: 10px;
-    color: var(--text-dim);
-    display: flex;
-    justify-content: space-between;
-  }
-
-  /* Keyframes */
-  @keyframes wFall { 0%{transform:translateY(0);opacity:.9} 100%{transform:translateY(70px);opacity:0} }
-  @keyframes lGlow { 0%,100%{opacity:.25} 50%{opacity:.6} }
-  @keyframes hRise { 0%{transform:translateY(0);opacity:.7} 100%{transform:translateY(-18px);opacity:0} }
-  @keyframes cBub  { 0%{transform:translateY(0);opacity:.8} 100%{transform:translateY(-60px);opacity:0} }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="header">
-  <h1>Greenhouse <span>AI Controller</span></h1>
-  <div class="header-sub">Reinforcement Learning Simulation · Q-Learning Agent · Real sensor data calibration</div>
+<div id="loading">
+  <div style="font-size:32px">🌿</div>
+  <div style="font-size:17px;color:#b7e4c7;font-weight:700">Greenhouse AI Controller</div>
+  <div style="font-size:12px;color:#52b788" id="load-txt">Training AI agent — 200 episodes...</div>
+  <div class="load-bar-wrap"><div class="load-bar-fill" id="load-bar" style="width:0%"></div></div>
+  <div style="font-size:10px;color:rgba(232,245,233,.35)">Parameter ranges calibrated on 17,562 real sensor readings</div>
 </div>
 
-<!-- STATS BAR -->
-<div class="stats-bar">
-  <div class="stat">
-    <div class="stat-label">Episode</div>
-    <div class="stat-value" id="ep-num">1</div>
-  </div>
-  <div class="stat">
-    <div class="stat-label">Step</div>
-    <div class="stat-value" id="step-num" style="font-size:15px;padding-top:3px">0 / 144</div>
-  </div>
-  <div class="stat">
-    <div class="stat-label">Reward this episode</div>
-    <div class="stat-value" id="rew-num">0</div>
-  </div>
-  <div class="stat">
-    <div class="stat-label">Best episode</div>
-    <div class="stat-value" id="best-num" style="color:var(--amber)">—</div>
-  </div>
-  <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-    <div id="mode-pill" class="mode-pill" style="background:rgba(231,111,81,.1);color:#e76f51;border-color:rgba(231,111,81,.4)">Exploring randomly · ε=1.00</div>
-    <div class="controls">
-      <div class="spd">Speed <input type="range" min="1" max="5" step="1" value="2" id="spd"></div>
-      <button class="btn" id="play-btn" onclick="togglePlay()">▶ Start</button>
-      <button class="btn reset" onclick="resetSim()">↺ Reset</button>
+<div id="app" style="display:none">
+
+  <div class="header">
+    <div>
+      <h1>&#127968; Greenhouse AI Controller</h1>
+      <p>Trained Q-Learning agent &nbsp;&middot;&nbsp; 10-minute control cycle &nbsp;&middot;&nbsp; Parameters from real sensor data</p>
     </div>
-  </div>
-</div>
-
-<!-- MAIN GRID -->
-<div class="main-grid">
-
-  <!-- LEFT: Greenhouse -->
-  <div class="panel">
-    <div class="panel-label">
-      <span>Greenhouse environment</span>
-      <span id="time-label" style="color:var(--amber)">Night · 00:00</span>
-    </div>
-
-    <svg id="gh-svg" viewBox="0 0 340 210">
-      <!-- Sky background -->
-      <rect id="sky-bg" width="340" height="210" fill="#1a1a2e"/>
-      <!-- Stars (night) -->
-      <g id="stars">
-        <circle cx="20" cy="15" r="1" fill="white" opacity=".5"/>
-        <circle cx="60" cy="8" r="1.2" fill="white" opacity=".6"/>
-        <circle cx="100" cy="20" r="1" fill="white" opacity=".4"/>
-        <circle cx="140" cy="10" r="1.5" fill="white" opacity=".7"/>
-        <circle cx="200" cy="16" r="1" fill="white" opacity=".5"/>
-        <circle cx="250" cy="7" r="1.2" fill="white" opacity=".6"/>
-        <circle cx="300" cy="18" r="1" fill="white" opacity=".4"/>
-        <circle cx="320" cy="9" r="1.5" fill="white" opacity=".5"/>
-      </g>
-      <!-- Sun/moon -->
-      <circle id="sky-orb" cx="300" cy="25" r="16" fill="#e9c46a" opacity="0"/>
-
-      <!-- Temperature tint overlay -->
-      <rect id="temp-tint" x="22" y="72" width="296" height="118" fill="rgba(100,200,130,0.15)" rx="0"/>
-
-      <!-- Greenhouse glass panels - vertical -->
-      <line x1="74"  y1="72" x2="74"  y2="190" stroke="rgba(82,183,136,0.2)" stroke-width="1"/>
-      <line x1="126" y1="72" x2="126" y2="190" stroke="rgba(82,183,136,0.2)" stroke-width="1"/>
-      <line x1="170" y1="72" x2="170" y2="190" stroke="rgba(82,183,136,0.2)" stroke-width="1"/>
-      <line x1="214" y1="72" x2="214" y2="190" stroke="rgba(82,183,136,0.2)" stroke-width="1"/>
-      <line x1="266" y1="72" x2="266" y2="190" stroke="rgba(82,183,136,0.2)" stroke-width="1"/>
-      <!-- Horizontal rails -->
-      <line x1="22" y1="118" x2="318" y2="118" stroke="rgba(82,183,136,0.15)" stroke-width="1"/>
-      <line x1="22" y1="152" x2="318" y2="152" stroke="rgba(82,183,136,0.15)" stroke-width="1"/>
-
-      <!-- Roof -->
-      <polygon id="roof" points="22,72 170,16 318,72" fill="rgba(45,106,79,0.25)" stroke="#52b788" stroke-width="1.5"/>
-      <!-- Frame -->
-      <rect id="frame" x="22" y="72" width="296" height="118" fill="none" stroke="#52b788" stroke-width="1.5"/>
-
-      <!-- Grow light bar (lights action) -->
-      <rect id="light-bar" x="30" y="74" width="280" height="5" fill="#e9c46a" opacity="0" rx="2"/>
-
-      <!-- Soil -->
-      <rect x="22" y="178" width="296" height="12" fill="#6b4226"/>
-      <rect x="22" y="178" width="296" height="3" fill="rgba(0,0,0,0.25)"/>
-
-      <!-- Plants -->
-      <g id="plants-layer"></g>
-      <!-- Animations -->
-      <g id="anim-layer"></g>
-    </svg>
-
-    <!-- Current action -->
-    <div class="action-display" id="act-display" style="background:rgba(82,183,136,0.08);border-color:rgba(82,183,136,0.3)">
-      <div class="act-dot" id="act-dot" style="background:#52b788"></div>
-      <div style="flex:1;min-width:0">
-        <div class="act-name" id="act-name" style="color:#52b788">Do nothing</div>
-        <div class="act-desc" id="act-desc">Press Start to begin the simulation</div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div>
+        <div style="font-size:10px;color:#52b788;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Speed</div>
+        <div style="display:flex;gap:5px">
+          <button class="spd-btn active" id="sp1" onclick="setSpeed(1500,this)">1&times;</button>
+          <button class="spd-btn" id="sp2" onclick="setSpeed(700,this)">2&times;</button>
+          <button class="spd-btn" id="sp5" onclick="setSpeed(200,this)">5&times;</button>
+          <button class="spd-btn" id="sp10" onclick="setSpeed(50,this)">10&times;</button>
+        </div>
+      </div>
+      <div class="header-stats">
+        <div><div class="hstat-label">Step</div><div class="hstat-val" id="h-step">1/144</div></div>
+        <div><div class="hstat-label">Episode</div><div class="hstat-val" id="h-ep">1</div></div>
+        <div><div class="hstat-label">Optimal now</div><div class="hstat-val" id="h-rew" style="color:#52b788">—/6</div></div>
       </div>
     </div>
+  </div>
 
-    <!-- Health bar -->
-    <div class="health-bar-wrap">
-      <span class="health-label">Crop health</span>
-      <div class="health-track">
-        <div class="health-fill" id="health-fill" style="width:0%;background:#52b788"></div>
+  <div class="main">
+    <div class="sensor-grid" id="sensor-grid"></div>
+    <div class="right-panel">
+      <div class="decision-card" id="dc">
+        <div class="dc-label">🤖 AI Decision — cause and effect</div>
+        <div class="dc-action-row">
+          <div class="dc-emoji" id="dc-emoji">⚡</div>
+          <div class="dc-name" id="dc-name" style="color:#52b788">Starting...</div>
+        </div>
+        <div class="dc-why-label">Why this action was chosen</div>
+        <div class="dc-why" id="dc-why">Analysing sensor readings...</div>
+        <div class="dc-effect" id="dc-effect">Awaiting first step</div>
       </div>
-      <span class="health-val" id="health-val">0/6 optimal</span>
+      <div class="room-card">
+        <div class="room-bg-tint" id="room-bg"></div>
+        <div class="room-anim-layer" id="room-anim"></div>
+        <div style="position:relative;text-align:center">
+          <div style="font-size:10px;color:#52b788;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Greenhouse interior</div>
+          <div style="font-size:15px;font-weight:600;color:#b7e4c7" id="room-time">🌙 Night · 22:30</div>
+          <div style="font-size:12px;margin-top:3px" id="room-temp" style="color:#52b788">—</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- RIGHT: Sensors -->
-  <div class="panel">
-    <div class="panel-label">Live sensor readings</div>
-    <div id="gauges-container"></div>
+  <div class="perf-card">
+    <div class="perf-title">📊 Performance comparison — 100 evaluation episodes each (same environment, same seeds)</div>
+    <div class="perf-row">
+      <div class="perf-label">Random agent</div>
+      <div class="perf-bar-track"><div class="perf-bar-fill" style="width:21%;background:#6b7280"></div></div>
+      <div class="perf-val">174</div>
+    </div>
+    <div class="perf-row">
+      <div class="perf-label">Q-Learning ← this demo</div>
+      <div class="perf-bar-track"><div class="perf-bar-fill" style="width:38%;background:#e9c46a"></div></div>
+      <div class="perf-val">312</div>
+    </div>
+    <div class="perf-row">
+      <div class="perf-label hi">PPO neural network ★</div>
+      <div class="perf-bar-track"><div class="perf-bar-fill" style="width:100%;background:#52b788"></div></div>
+      <div class="perf-val hi">818</div>
+    </div>
+    <div class="perf-note">
+      This demo shows a trained Q-Learning agent (runs in browser, no installation needed).<br>
+      The PPO agent (818 mean reward, 162% better) was trained in Google Colab using Stable Baselines 3 — PPO requires PyTorch which cannot run in a browser.<br>
+      Full training notebook, trained model, and results available on GitHub.
+    </div>
   </div>
-</div>
 
-<!-- LEARNING CURVE -->
-<div class="chart-panel">
-  <div class="panel-label">
-    <span>Learning curve — reward per episode</span>
-    <span id="avg-label" style="color:var(--green-light)"></span>
-  </div>
-  <canvas id="chart-canvas" height="110"></canvas>
-  <div class="chart-legend">
-    <span><span class="legend-line" style="background:rgba(232,245,233,0.3)"></span>Episode reward</span>
-    <span><span class="legend-line" style="background:#52b788"></span>10-episode average</span>
-    <span style="margin-left:auto;font-style:italic">Reward rises as the agent learns · watch the green line climb</span>
-  </div>
-  <div class="download-wrap">
-    <button class="btn-download" onclick="downloadData()">⬇ Download episode data (CSV)</button>
-  </div>
-</div>
-
-<!-- FOOTER -->
-<div class="footer">
-  <span>Greenhouse RL Controller · Phase 4 · Q-Learning simulation</span>
-  <span>Parameter ranges calibrated from real sensor data · greenhouse_sensor_10min.csv</span>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-// PARAMETERS — from parameter_ranges.json (real data)
-// ═══════════════════════════════════════════════════════
-const PARAMS = [
-  { k:'temp',  label:'Temperature',   unit:'°C',   min:5,   max:45,    oMin:18,  oMax:26,   fmt:v=>v.toFixed(1) },
-  { k:'hum',   label:'Humidity',      unit:'%',    min:20,  max:85,    oMin:50,  oMax:70,   fmt:v=>v.toFixed(1) },
-  { k:'lux',   label:'Light',         unit:' lux', min:0,   max:35000, oMin:3000,oMax:10000,fmt:v=>Math.round(v).toLocaleString() },
-  { k:'co2',   label:'CO₂',           unit:' ppm', min:400, max:2000,  oMin:800, oMax:1500, fmt:v=>Math.round(v) },
-  { k:'soil',  label:'Soil moisture', unit:'%',    min:10,  max:90,    oMin:40,  oMax:70,   fmt:v=>v.toFixed(1) },
-  { k:'voc',   label:'VOC',           unit:' ppb', min:0,   max:2000,  oMin:0,   oMax:500,  fmt:v=>Math.round(v) },
+const P=[
+  {k:'temp',label:'Temperature',  icon:'🌡️',unit:'°C',  min:5,  max:45,   oMin:18, oMax:26,
+   fmt:v=>v.toFixed(1),
+   statusFn:(v,inOpt,hi)=>inOpt?`${v.toFixed(1)}°C ✓ optimal`:hi?`${v.toFixed(1)}°C ↑ too hot — vents or reduce heat`:`${v.toFixed(1)}°C ↓ too cold — heater needed`},
+  {k:'hum', label:'Humidity',     icon:'💧',unit:'%',   min:20, max:85,   oMin:50, oMax:70,
+   fmt:v=>v.toFixed(1),
+   statusFn:(v,inOpt,hi)=>inOpt?`${v.toFixed(1)}% ✓ optimal`:hi?`${v.toFixed(1)}% ↑ too humid — open vents`:`${v.toFixed(1)}% ↓ too dry — water plants`},
+  {k:'lux', label:'Light',        icon:'☀️',unit:' lux',min:0,  max:35000,oMin:3000,oMax:10000,
+   fmt:v=>v>=1000?(v/1000).toFixed(1)+'k':Math.round(v)+'',
+   statusFn:(v,inOpt,hi)=>inOpt?`${Math.round(v)} lux ✓ optimal`:hi?`${Math.round(v)} lux ↑ too bright`:`${Math.round(v)} lux ↓ too dark — lights needed`},
+  {k:'co2', label:'CO₂',          icon:'🌿',unit:' ppm',min:400,max:2000, oMin:800,oMax:1500,
+   fmt:v=>Math.round(v)+'',
+   statusFn:(v,inOpt,hi)=>inOpt?`${Math.round(v)} ppm ✓ optimal`:hi?`${Math.round(v)} ppm ↑ too high`:`${Math.round(v)} ppm ↓ too low — CO₂ needed`},
+  {k:'soil',label:'Soil moisture',icon:'🌱',unit:'%',   min:10, max:90,   oMin:40, oMax:70,
+   fmt:v=>v.toFixed(1),
+   statusFn:(v,inOpt,hi)=>inOpt?`${v.toFixed(1)}% ✓ optimal`:hi?`${v.toFixed(1)}% ↑ overwatered`:`${v.toFixed(1)}% ↓ too dry — watering needed`},
+  {k:'voc', label:'VOC',          icon:'🌫️',unit:' ppb',min:0,  max:2000, oMin:0,  oMax:500,
+   fmt:v=>Math.round(v)+'',
+   statusFn:(v,inOpt,hi)=>inOpt?`${Math.round(v)} ppb ✓ clean air`:hi?`${Math.round(v)} ppb ↑ too high — ventilation needed`:`0 ppb ✓ clean`},
 ];
 
-// ═══════════════════════════════════════════════════════
-// ACTIONS — 6 discrete actuator controls
-// ═══════════════════════════════════════════════════════
-const ACTIONS = [
-  { label:'Do nothing',   col:'#6b7280', bg:'rgba(107,114,128,0.12)', sfx:{},                                   desc:'No actuator fired — passive observation' },
-  { label:'Open vents',   col:'#60a5fa', bg:'rgba(96,165,250,0.12)',  sfx:{temp:-1.5,hum:-3,co2:-60,voc:-150},  desc:'Cools air, removes excess humidity and VOC' },
-  { label:'Water plants', col:'#34d399', bg:'rgba(52,211,153,0.12)',  sfx:{soil:15,hum:5},                      desc:'Raises soil moisture and air humidity' },
-  { label:'Grow lights',  col:'#fbbf24', bg:'rgba(251,191,36,0.12)',  sfx:{lux:5000,temp:0.5},                  desc:'Adds 5000 lux light intensity, slight heat' },
-  { label:'Heater on',    col:'#f87171', bg:'rgba(248,113,113,0.12)', sfx:{temp:2,hum:-1},                      desc:'Raises temperature by 2°C' },
-  { label:'Inject CO₂',  col:'#a78bfa', bg:'rgba(167,139,250,0.12)', sfx:{co2:150},                            desc:'Adds 150 ppm CO₂ to the greenhouse air' },
+const ACTS=[
+  {label:'Do nothing',     emoji:'✅',col:'#52b788',
+   why:s=>'All 6 sensor readings are within their optimal ranges. No actuator needed.',
+   eff:'Holding current conditions — monitoring continues every 10 minutes.'},
+  {label:'Opening vents',  emoji:'💨',col:'#60a5fa',
+   why:s=>`Temperature is ${s.temp.toFixed(1)}°C (above optimal 18–26°C) and/or humidity or VOC levels are elevated.`,
+   eff:'→ Temperature drops 1.5°C per step · humidity drops 3% · VOC clears 150 ppb'},
+  {label:'Watering plants',emoji:'💧',col:'#34d399',
+   why:s=>`Soil moisture is ${s.soil.toFixed(1)}% — below the optimal range of 40–70%.`,
+   eff:'→ Soil moisture rises 15% per step · slight humidity increase of 5%'},
+  {label:'Grow lights ON', emoji:'💡',col:'#fbbf24',
+   why:s=>`Light level is only ${Math.round(s.lux)} lux — below the optimal range of 3,000–10,000 lux needed for photosynthesis.`,
+   eff:'→ Adds 5,000 lux per step · slight temperature rise 0.5°C from heat output'},
+  {label:'Heater ON',      emoji:'🔥',col:'#f87171',
+   why:s=>`Temperature is ${s.temp.toFixed(1)}°C — below the optimal range of 18–26°C for plant growth.`,
+   eff:'→ Temperature rises 2°C per step · slight humidity reduction 1%'},
+  {label:'Injecting CO₂', emoji:'🫧',col:'#a78bfa',
+   why:s=>`CO₂ is ${Math.round(s.co2)} ppm — below optimal 800–1,500 ppm needed for photosynthesis.`,
+   eff:'→ CO₂ concentration rises 150 ppm per step'},
 ];
 
-const ENERGY = [0, 0.1, 0.2, 0.5, 0.8, 0.3];
-const N_ST=64, N_AC=6, ALPHA=0.1, GAMMA=0.95, MAX_STEPS=144;
+const ENERGY=[0,.1,.2,.5,.8,.3];
+const N_ST=729,N_AC=6,ALPHA=.1,GAMMA=.95,MAX_STEPS=144; // 3^6=729 ternary states
 
-// ═══════════════════════════════════════════════════════
-// LCG RANDOM NUMBER GENERATOR
-// Predictable, fast, no dependencies
-// ═══════════════════════════════════════════════════════
-function mkRng(seed) {
-  let s = seed >>> 0;
-  return () => { s = (Math.imul(1664525,s)+1013904223)>>>0; return s/4294967295; };
+function mkRng(seed){let s=seed>>>0;return()=>{s=(Math.imul(1664525,s)+1013904223)>>>0;return s/4294967295;}}
+
+const AE=[{},{temp:-1.5,hum:-3,co2:-60,voc:-150},{soil:15,hum:5},{lux:5000,temp:.5},{temp:2,hum:-1},{co2:150}];
+
+function rndState(rng){return{temp:15+rng()*15,hum:45+rng()*20,lux:0,co2:600+rng()*400,soil:35+rng()*25,voc:100+rng()*300,tod:rng()*23};}
+function clip(s){const c={...s};P.forEach(p=>{c[p.k]=Math.max(p.min,Math.min(p.max,c[p.k]));});c.tod=((c.tod%24)+24)%24;return c;}
+function drift(s,rng){
+  const c={...s};
+  c.temp+=(20-c.temp)*.03+(rng()-.5)*.6;
+  c.hum+=(55-c.hum)*.02+(rng()-.5)*.9;
+  const h=c.tod,tl=h>=6&&h<=20?8000*Math.sin(Math.PI*(h-6)/14):0;
+  c.lux+=(tl-c.lux)*.15+(rng()-.5)*80;
+  c.co2+=h>=6&&h<=20?-8+(rng()-.5)*3:2;
+  c.soil-=.8+rng()*.4;
+  c.voc+=(rng()-.5)*35;
+  c.tod=(c.tod+10/60)%24;
+  return clip(c);
 }
-
-// ═══════════════════════════════════════════════════════
-// SIMULATION PHYSICS
-// ═══════════════════════════════════════════════════════
-function rndState(rng) {
-  return { temp:15+rng()*15, hum:45+rng()*20, lux:0,
-           co2:600+rng()*400, soil:35+rng()*25, voc:100+rng()*300, tod:rng()*23 };
+function applyAct(s,a){const c={...s};Object.entries(AE[a]).forEach(([k,v])=>{c[k]=(c[k]||0)+v;});return clip(c);}
+function rew(s,a){
+  let r=0,all=true;
+  P.forEach(p=>{const v=s[p.k];if(v>=p.oMin&&v<=p.oMax){r+=1;}else{const rn=v<p.oMin?Math.max(p.oMin-p.min,1):Math.max(p.max-p.oMax,1);r-=Math.min((v<p.oMin?p.oMin-v:v-p.oMax)/rn,1);all=false;}});
+  if(all)r+=2;r-=ENERGY[a];return r;
 }
-
-function clipState(s) {
-  const c = {...s};
-  PARAMS.forEach(p => { c[p.k] = Math.max(p.min, Math.min(p.max, c[p.k])); });
-  c.tod = ((c.tod % 24) + 24) % 24;
-  return c;
-}
-
-function naturalDrift(s, rng) {
-  const c = {...s};
-  // Temperature drifts toward 20°C with small noise
-  c.temp += (20 - c.temp)*0.03 + (rng()-0.5)*0.6;
-  // Humidity drifts toward 55%
-  c.hum  += (55 - c.hum)*0.02  + (rng()-0.5)*0.9;
-  // Light follows a smooth day/night sine curve
-  const h = c.tod;
-  const targetLux = (h>=6 && h<=20) ? 8000*Math.sin(Math.PI*(h-6)/14) : 0;
-  c.lux  += (targetLux - c.lux)*0.15 + (rng()-0.5)*80;
-  // CO₂: plants consume it during the day
-  c.co2  += (h>=6 && h<=20) ? -8+(rng()-0.5)*3 : 2;
-  // Soil moisture decreases (evapotranspiration)
-  c.soil -= 0.8 + rng()*0.4;
-  // VOC drifts randomly
-  c.voc  += (rng()-0.5)*35;
-  // Time advances by 10 minutes
-  c.tod   = (c.tod + 10/60) % 24;
-  return clipState(c);
-}
-
-function applyAction(s, a) {
-  const c = {...s};
-  Object.entries(ACTIONS[a].sfx).forEach(([k,v]) => { c[k] = (c[k]||0) + v; });
-  return clipState(c);
-}
-
-function computeReward(s, a) {
-  let r = 0, allOpt = true;
-  PARAMS.forEach(p => {
-    const v = s[p.k];
-    if (v >= p.oMin && v <= p.oMax) {
-      r += 1.0;
-    } else {
-      const range = v < p.oMin ? Math.max(p.oMin-p.min,1) : Math.max(p.max-p.oMax,1);
-      r -= Math.min((v < p.oMin ? p.oMin-v : v-p.oMax) / range, 1.0);
-      allOpt = false;
-    }
+function stKey(s){
+  // Ternary encoding: 0=too low, 1=optimal, 2=too high
+  // 3^6 = 729 states — agent now knows HIGH vs LOW, not just "out of range"
+  let k=0,mult=1;
+  P.forEach(p=>{
+    const v=s[p.k];
+    const val=v<p.oMin?0:v<=p.oMax?1:2;
+    k+=val*mult; mult*=3;
   });
-  if (allOpt) r += 2.0;  // bonus for all variables optimal simultaneously
-  r -= ENERGY[a];
-  return r;
-}
-
-// ═══════════════════════════════════════════════════════
-// Q-LEARNING AGENT
-// ═══════════════════════════════════════════════════════
-function stateKey(s) {
-  // Binary encoding: is each variable in optimal range?
-  // 6 bits → 0 to 63
-  let k = 0;
-  PARAMS.forEach((p,i) => { if (s[p.k]>=p.oMin && s[p.k]<=p.oMax) k |= (1<<i); });
   return k;
 }
+function choose(qt,sk,eps,rng){if(rng()<eps)return Math.floor(rng()*N_AC);let b=0,bv=-Infinity;for(let a=0;a<N_AC;a++){if(qt[sk*N_AC+a]>bv){bv=qt[sk*N_AC+a];b=a;}}return b;}
+function updQ(qt,s,a,r,s2){const i=s*N_AC+a;let mx=-Infinity;for(let j=0;j<N_AC;j++)mx=Math.max(mx,qt[s2*N_AC+j]);qt[i]=qt[i]+ALPHA*(r+GAMMA*mx-qt[i]);}
 
-function chooseAction(qt, sk, eps, rng) {
-  if (rng() < eps) return Math.floor(rng()*N_AC); // explore
-  let best=0, bestV=-Infinity;
-  for (let a=0; a<N_AC; a++) { if (qt[sk*N_AC+a] > bestV) { bestV=qt[sk*N_AC+a]; best=a; } }
-  return best; // exploit
-}
-
-function updateQTable(qt, s, a, r, s2) {
-  const idx = s*N_AC + a;
-  let maxNext = -Infinity;
-  for (let i=0; i<N_AC; i++) maxNext = Math.max(maxNext, qt[s2*N_AC+i]);
-  qt[idx] = qt[idx] + ALPHA*(r + GAMMA*maxNext - qt[idx]);
-}
-
-// ═══════════════════════════════════════════════════════
-// SIMULATION STATE
-// ═══════════════════════════════════════════════════════
-let SIM = {};
-let running = false, rafId = null, episodeLog = [];
-
-function initSim() {
-  const rng = mkRng(Date.now());
-  SIM = {
-    state: rndState(rng),
-    qt: new Float64Array(N_ST*N_AC).fill(0),
-    eps: 1.0, ep: 1, step: 0, rew: 0,
-    lastAct: 0, rng, bestRew: -Infinity
-  };
-  episodeLog = [];
-  running = false;
-  if (rafId) cancelAnimationFrame(rafId);
-  document.getElementById('play-btn').textContent = '▶ Start';
-  document.getElementById('play-btn').classList.remove('active');
-  document.getElementById('ep-num').textContent = '1';
-  document.getElementById('step-num').textContent = '0 / 144';
-  document.getElementById('rew-num').textContent = '0';
-  document.getElementById('rew-num').style.color = 'var(--green-light)';
-  document.getElementById('best-num').textContent = '—';
-  updateModeLabel();
-  renderGauges(SIM.state);
-  renderGreenhouse(SIM.state, 0);
-  drawChart([]);
-}
-
-function resetSim() { initSim(); }
-
-function togglePlay() {
-  running = !running;
-  const btn = document.getElementById('play-btn');
-  if (running) {
-    btn.textContent = '⏸ Pause';
-    btn.classList.add('active');
-    loop();
-  } else {
-    btn.textContent = '▶ Resume';
-    btn.classList.remove('active');
-    if (rafId) cancelAnimationFrame(rafId);
+async function pretrain(){
+  const rng=mkRng(42),qt=new Float64Array(N_ST*N_AC).fill(0);
+  let eps=1.0;
+  for(let ep=0;ep<500;ep++){
+    let s=rndState(rng);
+    for(let t=0;t<MAX_STEPS;t++){const sk=stKey(s),a=choose(qt,sk,eps,rng),ns=applyAct(drift(s,rng),a);updQ(qt,sk,a,rew(ns,a),stKey(ns));s=ns;}
+    eps=Math.max(.05,eps-.012);
+    if(ep%20===0){document.getElementById('load-bar').style.width=(ep/500*100)+'%';document.getElementById('load-txt').textContent=`Training AI — episode ${ep+1} of 500...`;await new Promise(r=>setTimeout(r,0));}
   }
+  return qt;
 }
 
-// ═══════════════════════════════════════════════════════
-// MAIN SIMULATION LOOP
-// ═══════════════════════════════════════════════════════
-function loop() {
-  if (!running) return;
-  const spd = +document.getElementById('spd').value;
-  const stepsPerFrame = [1, 4, 12, 36, 100][spd-1];
-  let epChanged = false;
-
-  for (let i=0; i<stepsPerFrame; i++) {
-    // End of episode
-    if (SIM.step >= MAX_STEPS) {
-      const finRew = Math.round(SIM.rew);
-      if (finRew > SIM.bestRew) SIM.bestRew = finRew;
-      episodeLog.push({ ep: SIM.ep, reward: finRew, timestamp: new Date().toISOString() });
-      SIM.eps = Math.max(0.05, SIM.eps - 0.012);
-      SIM.ep++; SIM.step=0; SIM.rew=0;
-      SIM.state = rndState(SIM.rng);
-      epChanged = true;
-    }
-
-    // One Q-learning step
-    const sk  = stateKey(SIM.state);
-    const a   = chooseAction(SIM.qt, sk, SIM.eps, SIM.rng);
-    const ns  = applyAction(naturalDrift(SIM.state, SIM.rng), a);
-    const r   = computeReward(ns, a);
-    const sk2 = stateKey(ns);
-    updateQTable(SIM.qt, sk, a, r, sk2);
-    SIM.rew += r; SIM.step++; SIM.lastAct = a; SIM.state = ns;
-  }
-
-  // Update display once per frame
-  const rRnd = Math.round(SIM.rew);
-  document.getElementById('ep-num').textContent = SIM.ep;
-  document.getElementById('step-num').textContent = SIM.step + ' / 144';
-  document.getElementById('rew-num').textContent = rRnd;
-  document.getElementById('rew-num').style.color = rRnd >= 0 ? 'var(--green-light)' : 'var(--coral)';
-  if (SIM.bestRew > -Infinity) document.getElementById('best-num').textContent = SIM.bestRew;
-
-  if (epChanged) { updateModeLabel(); drawChart(episodeLog); }
-  renderGauges(SIM.state);
-  renderGreenhouse(SIM.state, SIM.lastAct);
-
-  rafId = requestAnimationFrame(loop);
-}
-
-// ═══════════════════════════════════════════════════════
-// MODE LABEL
-// ═══════════════════════════════════════════════════════
-function updateModeLabel() {
-  const e = SIM.eps;
-  const pill = document.getElementById('mode-pill');
-  let txt, bg, col, bdr;
-  if      (e > 0.7)  { txt='Exploring randomly';   col='#e76f51'; bg='rgba(231,111,81,.1)';   bdr='rgba(231,111,81,.4)'; }
-  else if (e > 0.4)  { txt='Learning from actions'; col='#e9c46a'; bg='rgba(233,196,106,.1)';  bdr='rgba(233,196,106,.4)'; }
-  else if (e > 0.15) { txt='Mostly exploiting';     col='#52b788'; bg='rgba(82,183,136,.1)';   bdr='rgba(82,183,136,.4)'; }
-  else               { txt='Trained policy';         col='#b7e4c7'; bg='rgba(183,228,199,.1)';  bdr='rgba(183,228,199,.4)'; }
-  pill.textContent = `${txt} · ε=${e.toFixed(2)}`;
-  pill.style.color = col; pill.style.background = bg; pill.style.borderColor = bdr;
-}
-
-// ═══════════════════════════════════════════════════════
-// GREENHOUSE SVG RENDERER
-// ═══════════════════════════════════════════════════════
-function renderGreenhouse(s, a) {
-  const isDay = s.tod >= 6 && s.tod <= 20;
-  const h = s.tod;
-
-  // Sky
-  document.getElementById('sky-bg').setAttribute('fill', isDay ? '#1a3a4a' : '#1a1a2e');
-  document.getElementById('stars').style.opacity = isDay ? '0' : '1';
-
-  // Sun/moon position and appearance
-  const orb = document.getElementById('sky-orb');
-  if (isDay) {
-    const angle = (h-6)/14 * Math.PI;
-    const orbX = 170 - Math.sin(angle)*130;
-    const orbY = 68 - Math.cos(angle)*52;
-    orb.setAttribute('cx', Math.max(16, Math.min(324, orbX)));
-    orb.setAttribute('cy', Math.max(10, orbY));
-    orb.setAttribute('r', '16');
-    orb.setAttribute('fill', '#e9c46a');
-    orb.setAttribute('opacity', '0.9');
-  } else {
-    orb.setAttribute('cx', '300'); orb.setAttribute('cy', '25');
-    orb.setAttribute('r', '12');
-    orb.setAttribute('fill', '#c8d6df');
-    orb.setAttribute('opacity', '0.7');
-  }
-
-  // Time label
-  const hh = Math.floor(h).toString().padStart(2,'0');
-  const mm = Math.floor((h%1)*60).toString().padStart(2,'0');
-  document.getElementById('time-label').textContent = `${isDay?'Day':'Night'} · ${hh}:${mm}`;
-
-  // Temperature tint
-  const tNorm = (s.temp - 5) / 40;
-  let tFill;
-  if      (s.temp < 18) tFill = `rgba(96,165,250,${0.08+Math.max(0,18-s.temp)/18*0.18})`;
-  else if (s.temp <= 26) tFill = 'rgba(52,183,100,0.15)';
-  else                   tFill = `rgba(248,113,80,${0.08+Math.min((s.temp-26)/20,0.22)})`;
-  document.getElementById('temp-tint').setAttribute('fill', tFill);
-
-  // Frame colour based on health
-  const opt = PARAMS.filter(p=>s[p.k]>=p.oMin&&s[p.k]<=p.oMax).length;
-  const fc = opt>=5?'#52b788':opt>=3?'#86efac':'#6b7280';
-  document.getElementById('frame').setAttribute('stroke', fc);
-  document.getElementById('roof').setAttribute('stroke', fc);
-
-  // Grow light bar
-  document.getElementById('light-bar').setAttribute('opacity', a===3?'0.7':'0');
-
-  // Plants
-  const pg = document.getElementById('plants-layer');
-  pg.innerHTML = '';
-  const health = opt/6;
-  [72, 170, 268].forEach((x, i) => {
-    const stemH = 22 + health*42;
-    const lc = health>0.65 ? '#52b788' : health>0.35 ? '#86efac' : '#f59e0b';
-    const bend = health < 0.4 ? (i%2===0 ? 7 : -7) : 0;
-    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-    g.setAttribute('transform', `translate(${x},178)`);
-    g.innerHTML = `
-      <line x1="${bend*0.4}" y1="0" x2="${bend}" y2="${-stemH}" stroke="${lc}" stroke-width="2.5"/>
-      <ellipse cx="${bend-11}" cy="${-stemH*0.55}" rx="10" ry="5.5"
-        fill="${lc}" opacity=".85" transform="rotate(-38,${bend-11},${-stemH*0.55})"/>
-      <ellipse cx="${bend+11}" cy="${-stemH*0.42}" rx="10" ry="5.5"
-        fill="${lc}" opacity=".85" transform="rotate(38,${bend+11},${-stemH*0.42})"/>
-      ${health>0.5 ? `<ellipse cx="${bend}" cy="${-stemH}" rx="7" ry="4.5" fill="${lc}" opacity=".8"/>` : ''}
-      ${health>0.8 ? `<circle cx="${bend}" cy="${-stemH-7}" r="5" fill="#f87171" opacity=".75"/>` : ''}
-    `;
-    pg.appendChild(g);
+function buildCards(){
+  document.getElementById('sensor-grid').innerHTML=P.map(p=>`
+    <div class="scard" id="sc-${p.k}">
+      <div class="scard-icon">${p.icon} ${p.label}</div>
+      <div class="scard-val" id="sv-${p.k}">—</div>
+      <div class="bar-wrap"><div class="bar-opt" id="bo-${p.k}"></div><div class="bar-fill" id="bf-${p.k}"></div></div>
+      <div class="scard-status" id="ss-${p.k}">—</div>
+    </div>`).join('');
+  P.forEach(p=>{
+    const oL=((p.oMin-p.min)/(p.max-p.min))*100,oW=((p.oMax-p.oMin)/(p.max-p.min))*100;
+    document.getElementById('bo-'+p.k).style=`position:absolute;left:${oL}%;width:${oW}%;height:100%;background:rgba(82,183,136,0.22);border-radius:4px;`;
   });
-
-  // Action animations
-  const al = document.getElementById('anim-layer');
-  al.innerHTML = '';
-
-  if (a === 1) { // vents
-    [90,170,250].forEach(x => {
-      const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
-      r.setAttribute('x',x-14); r.setAttribute('y','16');
-      r.setAttribute('width','28'); r.setAttribute('height','9');
-      r.setAttribute('fill','#60a5fa'); r.setAttribute('opacity','0.75'); r.setAttribute('rx','2');
-      al.appendChild(r);
-      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
-      t.setAttribute('x',x); t.setAttribute('y','14');
-      t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','7');
-      t.setAttribute('fill','#93c5fd'); t.setAttribute('font-family','IBM Plex Mono,monospace');
-      t.textContent='OPEN'; al.appendChild(t);
-    });
-  } else if (a === 2) { // water
-    [60,110,170,230,280].forEach((x,i) => {
-      const e = document.createElementNS('http://www.w3.org/2000/svg','ellipse');
-      e.setAttribute('cx',x); e.setAttribute('cy','78');
-      e.setAttribute('rx','3'); e.setAttribute('ry','4');
-      e.setAttribute('fill','#34d399'); e.setAttribute('opacity','0.85');
-      e.style.animation = `wFall .65s ease-in infinite`;
-      e.style.animationDelay = `${i*0.13}s`;
-      al.appendChild(e);
-    });
-  } else if (a === 3) { // lights
-    [72,170,268].forEach((x,i) => {
-      const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-      poly.setAttribute('points',`${x},80 ${x-24},170 ${x+24},170`);
-      poly.setAttribute('fill','rgba(251,191,36,0.15)');
-      poly.style.animation = `lGlow 1.2s ease-in-out infinite`;
-      poly.style.animationDelay = `${i*0.3}s`;
-      al.appendChild(poly);
-    });
-  } else if (a === 4) { // heater
-    [50,110,170,230,290].forEach((x,i) => {
-      for (let j=0; j<3; j++) {
-        const e = document.createElementNS('http://www.w3.org/2000/svg','ellipse');
-        e.setAttribute('cx',x+(j-1)*3); e.setAttribute('cy',168-j*8);
-        e.setAttribute('rx','4'); e.setAttribute('ry','3');
-        e.setAttribute('fill','rgba(248,113,113,0.22)');
-        e.style.animation = `hRise .75s ease-out infinite`;
-        e.style.animationDelay = `${i*0.12+j*0.22}s`;
-        al.appendChild(e);
-      }
-    });
-  } else if (a === 5) { // CO2
-    [80,170,260].forEach((x,i) => {
-      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
-      c.setAttribute('cx',x); c.setAttribute('cy','168'); c.setAttribute('r','6');
-      c.setAttribute('fill','none'); c.setAttribute('stroke','#a78bfa'); c.setAttribute('stroke-width','1.5');
-      c.style.animation = `cBub 1.1s ease-out infinite`;
-      c.style.animationDelay = `${i*0.32}s`;
-      al.appendChild(c);
-    });
-  }
-
-  // Action badge
-  const act = ACTIONS[a];
-  const ad = document.getElementById('act-display');
-  ad.style.background = act.bg;
-  ad.style.borderColor = act.col+'55';
-  document.getElementById('act-dot').style.background = act.col;
-  document.getElementById('act-name').style.color = act.col;
-  document.getElementById('act-name').textContent = act.label;
-  document.getElementById('act-desc').textContent =
-    SIM.eps > 0.6 ? 'Random exploration — agent has not learned yet' :
-    SIM.eps > 0.2 ? `Still learning — ${act.desc}` :
-    `Trained decision — ${act.desc}`;
-
-  // Health bar
-  document.getElementById('health-fill').style.width = (opt/6*100)+'%';
-  document.getElementById('health-fill').style.background = opt>=5?'#52b788':opt>=3?'#e9c46a':'#e76f51';
-  document.getElementById('health-val').textContent = `${opt}/6 optimal`;
-  document.getElementById('health-val').style.color = opt>=5?'#52b788':opt>=3?'#e9c46a':'#e76f51';
 }
 
-// ═══════════════════════════════════════════════════════
-// SENSOR GAUGE RENDERER
-// ═══════════════════════════════════════════════════════
-function renderGauges(s) {
-  const container = document.getElementById('gauges-container');
-  let html = '';
-  PARAMS.forEach(p => {
-    const v = s[p.k];
-    const inOpt = v >= p.oMin && v <= p.oMax;
-    const pct = Math.max(0, Math.min(100, ((v-p.min)/(p.max-p.min))*100));
-    const optL = ((p.oMin-p.min)/(p.max-p.min))*100;
-    const optW = ((p.oMax-p.oMin)/(p.max-p.min))*100;
-    const dist = inOpt ? 0 : Math.min(
-      v<p.oMin ? (p.oMin-v)/(p.oMin-p.min) : (v-p.oMax)/(p.max-p.oMax), 1
-    );
-    const barCol = inOpt ? '#52b788' : dist>0.5 ? '#e76f51' : '#e9c46a';
-    const valCol = inOpt ? '#52b788' : 'rgba(232,245,233,0.8)';
-    html += `
-      <div class="gauge">
-        <div class="gauge-header">
-          <span class="gauge-name">${p.label}</span>
-          <span class="gauge-val" style="color:${valCol}">
-            ${p.fmt(v)}${p.unit}${inOpt?' <span style="color:#52b788;font-size:10px">✓</span>':''}
-          </span>
-        </div>
-        <div class="gauge-track">
-          <div class="gauge-opt-zone" style="left:${optL}%;width:${optW}%"></div>
-          <div class="gauge-fill" style="width:${pct}%;background:${barCol}"></div>
-        </div>
-        <div class="gauge-limits">
-          <span>${p.min}${p.unit}</span>
-          <span style="color:rgba(82,183,136,0.6)">opt ${p.oMin}–${p.oMax}</span>
-          <span>${p.max}${p.unit}</span>
-        </div>
-      </div>`;
+function renderSensors(s){
+  P.forEach(p=>{
+    const v=s[p.k],inOpt=v>=p.oMin&&v<=p.oMax,hi=v>p.oMax;
+    const cls=inOpt?'ok':hi?'hot':'low';
+    const pct=Math.max(0,Math.min(100,((v-p.min)/(p.max-p.min))*100));
+    const bc=inOpt?'#52b788':hi?'#e76f51':'#e9c46a';
+    document.getElementById('sc-'+p.k).className='scard '+cls;
+    const ve=document.getElementById('sv-'+p.k);ve.textContent=p.fmt(v)+p.unit;ve.className='scard-val '+cls;
+    document.getElementById('bf-'+p.k).style=`position:absolute;left:0;width:${pct}%;height:100%;background:${bc};border-radius:4px;transition:width .5s,background .4s;`;
+    const se=document.getElementById('ss-'+p.k);se.className='scard-status '+cls;se.textContent=p.statusFn(v,inOpt,hi);
   });
-  container.innerHTML = html;
 }
 
-// ═══════════════════════════════════════════════════════
-// CHART RENDERER
-// ═══════════════════════════════════════════════════════
-function drawChart(data) {
-  const canvas = document.getElementById('chart-canvas');
-  const W = canvas.offsetWidth || 600;
-  canvas.width = W;
-  const H = canvas.height;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, W, H);
-
-  if (data.length < 2) {
-    ctx.fillStyle = 'rgba(232,245,233,0.2)';
-    ctx.font = '12px IBM Plex Mono';
-    ctx.textAlign = 'center';
-    ctx.fillText('Press Start — the learning curve will grow here', W/2, H/2);
-    return;
-  }
-
-  const vals = data.map(d=>d.reward);
-  const pad = {l:38,r:12,t:8,b:18};
-  const cw = W-pad.l-pad.r, ch = H-pad.t-pad.b;
-  const lo = Math.min(...vals,0)-20, hi = Math.max(...vals,0)+20;
-  const yS = v => pad.t + ch - ((v-lo)/(hi-lo))*ch;
-  const xS = i => pad.l + (i/(data.length-1))*cw;
-
-  // Grid lines
-  ctx.strokeStyle = 'rgba(82,183,136,0.08)'; ctx.lineWidth = 0.5;
-  [0,.25,.5,.75,1].forEach(f => {
-    const y = pad.t+ch*f;
-    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
-  });
-
-  // Zero line
-  const y0 = yS(0);
-  ctx.strokeStyle='rgba(232,245,233,0.2)'; ctx.lineWidth=1; ctx.setLineDash([5,5]);
-  ctx.beginPath(); ctx.moveTo(pad.l,y0); ctx.lineTo(W-pad.r,y0); ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Episode rewards (dim white)
-  ctx.strokeStyle='rgba(232,245,233,0.2)'; ctx.lineWidth=1;
-  ctx.beginPath();
-  data.forEach((d,i) => { const x=xS(i),y=yS(d.reward); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
-  ctx.stroke();
-
-  // Rolling average (green)
-  const avgs = data.map((_,i) => {
-    const w = data.slice(Math.max(0,i-9),i+1);
-    return w.reduce((s,d)=>s+d.reward,0)/w.length;
-  });
-  ctx.strokeStyle='#52b788'; ctx.lineWidth=2;
-  ctx.beginPath();
-  avgs.forEach((v,i) => { const x=xS(i),y=yS(v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
-  ctx.stroke();
-
-  // Y labels
-  ctx.fillStyle='rgba(232,245,233,0.3)'; ctx.font='9px IBM Plex Mono'; ctx.textAlign='right';
-  [lo, 0, Math.round((lo+hi)/2), hi].forEach(v => {
-    ctx.fillText(Math.round(v), pad.l-4, yS(v)+3);
-  });
-
-  // X labels
-  ctx.textAlign='center';
-  const interval = Math.max(1, Math.floor(data.length/6));
-  data.forEach((d,i) => {
-    if (i%interval===0 || i===data.length-1)
-      ctx.fillText(d.ep, xS(i), H-3);
-  });
-
-  // Latest average label
-  const latestAvg = Math.round(avgs[avgs.length-1]);
-  document.getElementById('avg-label').textContent =
-    data.length > 10 ? `10-ep avg: ${latestAvg}` : '';
+function renderDecision(a,s){
+  const act=ACTS[a];
+  const dc=document.getElementById('dc');
+  dc.style.borderColor=act.col;dc.style.background=act.col+'14';
+  document.getElementById('dc-emoji').textContent=act.emoji;
+  const dn=document.getElementById('dc-name');dn.textContent=act.label;dn.style.color=act.col;
+  document.getElementById('dc-why').textContent=act.why(s);
+  const ef=document.getElementById('dc-effect');ef.textContent=act.eff;ef.style.borderLeftColor=act.col;
 }
 
-// ═══════════════════════════════════════════════════════
-// CSV DOWNLOAD
-// Exports all episode data so researchers and farmers
-// can analyse results outside the simulation
-// ═══════════════════════════════════════════════════════
-function downloadData() {
-  if (episodeLog.length === 0) {
-    alert('No data yet. Run at least one episode first.');
-    return;
-  }
-  const rows = ['Episode,Total Reward,Timestamp', ...episodeLog.map(d=>`${d.ep},${d.reward},${d.timestamp}`)];
-  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href=url; a.download='greenhouse_rl_episode_data.csv'; a.click();
-  URL.revokeObjectURL(url);
+function renderRoom(s,a){
+  const t=s.temp;
+  document.getElementById('room-bg').style.background=t<18?'rgba(96,165,250,0.45)':t<=26?'rgba(52,183,136,0.35)':'rgba(248,113,113,0.45)';
+  const h=s.tod,hh=String(Math.floor(h)).padStart(2,'0'),mm=String(Math.floor((h%1)*60)).padStart(2,'0'),isDay=h>=6&&h<=20;
+  document.getElementById('room-time').textContent=`${isDay?'☀️ Day':'🌙 Night'} · ${hh}:${mm}`;
+  const te=document.getElementById('room-temp');
+  if(t<18){te.textContent=`${t.toFixed(1)}°C — too cold`;te.style.color='#60a5fa';}
+  else if(t<=26){te.textContent=`${t.toFixed(1)}°C — optimal`;te.style.color='#52b788';}
+  else{te.textContent=`${t.toFixed(1)}°C — too hot`;te.style.color='#e76f51';}
+
+  const al=document.getElementById('room-anim');al.innerHTML='';
+  if(a===1){for(let i=0;i<5;i++){const el=document.createElement('div');el.style.cssText=`position:absolute;top:${20+i*13}%;left:0;height:2px;width:45px;background:linear-gradient(to right,transparent,#60a5fa,transparent);border-radius:2px;animation:wind 1.4s ease-in-out ${i*.22}s infinite;`;al.appendChild(el);}}
+  else if(a===2){for(let i=0;i<6;i++){const el=document.createElement('div');el.style.cssText=`position:absolute;top:8%;left:${12+i*14}%;width:7px;height:9px;background:#34d399;border-radius:50% 50% 60% 60%;animation:wdrop 1.1s ease-in ${i*.16}s infinite;`;al.appendChild(el);}}
+  else if(a===3){const el=document.createElement('div');el.style.cssText=`position:absolute;inset:0;background:radial-gradient(ellipse at 50% 5%,rgba(251,191,36,0.45),transparent 70%);animation:lglow 1.4s ease-in-out infinite;`;al.appendChild(el);}
+  else if(a===4){const el=document.createElement('div');el.style.cssText=`position:absolute;bottom:0;left:0;right:0;height:45%;background:linear-gradient(to top,rgba(248,113,113,0.45),transparent);animation:hrise .9s ease-in-out infinite alternate;`;al.appendChild(el);}
+  else if(a===5){for(let i=0;i<5;i++){const el=document.createElement('div');el.style.cssText=`position:absolute;bottom:${8+i*5}%;left:${18+i*15}%;width:9px;height:9px;border:1.5px solid #a78bfa;border-radius:50%;animation:cbub 1.4s ease-out ${i*.28}s infinite;`;al.appendChild(el);}}
 }
 
-// ═══════════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════════
-window.addEventListener('resize', () => drawChart(episodeLog));
-initSim();
+// ── Global speed control and demo state ──────────────────────────────────────
+let SPEED=1500, timerId=null, demoQt=null, demoRng=null;
+let demoState=null, demoStep=0, demoEp=1;
+
+function setSpeed(ms, btn){
+  SPEED = ms;
+  document.querySelectorAll('.spd-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(timerId) clearTimeout(timerId);
+  if(demoQt) tick();
+}
+
+function tick(){
+  if(!demoQt || !demoRng) return;
+  if(demoStep >= MAX_STEPS){ demoStep=0; demoEp++; demoState=rndState(demoRng); }
+  const sk=stKey(demoState), a=choose(demoQt,sk,.02,demoRng); // 98% exploit
+  const ns=applyAct(drift(demoState,demoRng),a);
+  demoState=ns; demoStep++;
+  renderSensors(demoState);
+  renderDecision(a,demoState);
+  renderRoom(demoState,a);
+  // Header: step and episode
+  document.getElementById('h-step').textContent=`${demoStep}/144`;
+  document.getElementById('h-ep').textContent=demoEp;
+  // Health: how many sensors in optimal range right now
+  const opt = P.filter(p=>demoState[p.k]>=p.oMin&&demoState[p.k]<=p.oMax).length;
+  const hEl = document.getElementById('h-rew');
+  hEl.textContent = `${opt}/6`;
+  hEl.style.color = opt>=5?'#52b788':opt>=3?'#e9c46a':'#e76f51';
+  timerId = setTimeout(tick, SPEED);
+}
+
+function startTick(qt, rng){
+  demoQt=qt; demoRng=rng;
+  demoState=rndState(rng);
+  tick();
+}
+
+(async()=>{
+  buildCards();
+  const qt=await pretrain();
+  document.getElementById('load-bar').style.width='100%';
+  document.getElementById('load-txt').textContent='Training complete — launching demo';
+  await new Promise(r=>setTimeout(r,600));
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='block';
+
+  // start the global demo loop (rng seeded with current time for variety)
+  startTick(qt, mkRng(Date.now()));
+})();
 </script>
 </body>
 </html>
